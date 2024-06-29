@@ -5,7 +5,7 @@ import sys
 import re
 
 # Set the directory to monitor
-directory_to_monitor = r'C:\Users\tatez\Desktop\Testing Folder'
+directory_to_monitor = r'C:\Users\tatez\AppData\Roaming\com.modrinth.theseus\profiles\Final1.0.0_1.0.0\mods'
 
 # Get the script's directory
 script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +16,8 @@ def snapshot_directory(directory):
         for name in files:
             if not name.endswith('.disabled'):
                 filepath = os.path.join(root, name)
-                snapshot[filepath] = os.path.getmtime(filepath)
+                relpath = os.path.relpath(filepath, directory)  # Store relative paths
+                snapshot[relpath] = os.path.getmtime(filepath)
     return snapshot
 
 def remove_version_numbers(path):
@@ -32,12 +33,12 @@ def detect_changes(old_snapshot, new_snapshot, base_directory):
 
     for path, mtime in cleaned_new_snapshot.items():
         if path not in cleaned_old_snapshot:
-            changes.append(f"New file: {os.path.relpath(path, base_directory)}")
+            changes.append(f"New file: {path}")
         elif cleaned_old_snapshot[path] != mtime:
-            changes.append(f"Modified file: {os.path.relpath(path, base_directory)}")
+            changes.append(f"Modified file: {path}")
     for path in cleaned_old_snapshot:
         if path not in cleaned_new_snapshot:
-            changes.append(f"Deleted file: {os.path.relpath(path, base_directory)}")
+            changes.append(f"Deleted file: {path}")
     return changes
 
 def load_snapshot(snapshot_file):
@@ -48,7 +49,7 @@ def load_snapshot(snapshot_file):
 
 def save_snapshot(snapshot, snapshot_file):
     with open(snapshot_file, 'w') as f:
-        json.dump(snapshot, f)
+        json.dump(snapshot, f, indent=4)  # Added indent for better formatting
 
 def get_current_version(version_file):
     if os.path.exists(version_file):

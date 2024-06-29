@@ -3,7 +3,7 @@ import json
 
 # Set the directory where version snapshots are stored
 snapshots_dir = r'VersionSnapshots'
-current_directory = r'C:\Users\tatez\Desktop\Testing Folder'
+current_directory = r'C:\Users\tatez\AppData\Roaming\com.modrinth.theseus\profiles\Final1.0.0_1.0.0\mods'
 
 def list_versions():
     """
@@ -44,7 +44,17 @@ def load_snapshot(version):
     snapshot_file = os.path.join(snapshots_dir, version, f'directory_snapshot{version}.json')
     if os.path.exists(snapshot_file):
         with open(snapshot_file, 'r') as f:
-            return json.load(f)
+            snapshot = json.load(f)
+        
+        # Remove the repetitive part of the directory path
+        cleaned_snapshot = {}
+        for path, mtime in snapshot.items():
+            if os.path.splitdrive(path)[0] == os.path.splitdrive(current_directory)[0]:
+                cleaned_snapshot[os.path.relpath(path, current_directory)] = mtime
+            else:
+                cleaned_snapshot[path.replace(current_directory + '\\', '')] = mtime
+        
+        return cleaned_snapshot
     return {}
 
 def restore_files(current_directory, version):
@@ -55,17 +65,18 @@ def restore_files(current_directory, version):
     current_snapshot = snapshot_directory(current_directory)
     
     # Disable files not in snapshot
-    for filepath in current_snapshot:
-        if filepath not in snapshot:
-            disable_file(filepath)
+    for relpath in current_snapshot:
+        if relpath not in snapshot:
+            disable_file(os.path.join(current_directory, relpath))
     
     # Restore files from snapshot
-    for filepath in snapshot:
-        if filepath not in current_snapshot:
+    for relpath in snapshot:
+        filepath = os.path.join(current_directory, relpath)
+        if relpath not in current_snapshot:
             restore_file(filepath, current_directory)
         elif is_disabled(filepath):
-            restored_filename = os.path.basename(filepath)[:-9]  # Remove .disabled suffix
-            restore_file(os.path.join(current_directory, restored_filename), current_directory)
+            restored_filename = filepath[:-9]  # Remove .disabled suffix
+            restore_file(restored_filename, current_directory)
     
     print(f"Files restored to version {version}.")
 
@@ -77,7 +88,8 @@ def snapshot_directory(directory):
     for root, dirs, files in os.walk(directory):
         for name in files:
             filepath = os.path.join(root, name)
-            snapshot[filepath] = os.path.getmtime(filepath)
+            relpath = os.path.relpath(filepath, directory)
+            snapshot[relpath] = os.path.getmtime(filepath)
     return snapshot
 
 def disable_file(filepath):
