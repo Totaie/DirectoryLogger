@@ -60,6 +60,9 @@ def get_current_version(version_file):
 def get_next_version(current_version):
     major, minor, patch = map(int, current_version.split('.'))
     patch += 1
+    if patch >= 10:
+        patch = 0
+        minor += 1
     return f"{major}.{minor}.{patch}"
 
 def save_current_version(version_file, version):
