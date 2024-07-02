@@ -5,7 +5,7 @@ import sys
 import re
 
 # Set the directory to monitor
-directory_to_monitor = r'C:\Users\tatez\AppData\Roaming\com.modrinth.theseus\profiles\Final1.0.0_1.0.0\mods'
+directory_to_monitor = r'C:\Users\tatez\AppData\Roaming\com.modrinth.theseus\profiles\Elysian Echoes\mods'
 
 # Get the script's directory
 script_directory = os.path.dirname(os.path.abspath(__file__))
